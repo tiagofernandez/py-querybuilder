@@ -1,0 +1,4 @@
+[flake8]
+application_import_names = py_querybuilder
+extend-ignore = E203,S101
+max-line-length = 100

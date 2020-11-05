@@ -1,0 +1,258 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>py_querybuilder.api &#8212; py-querybuilder  documentation</title>
+    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">py-querybuilder  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">py_querybuilder.api</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for py_querybuilder.api</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span> <span class="nn">jinja2</span> <span class="kn">import</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">PackageLoader</span>
+
+<span class="kn">from</span> <span class="nn">jinjasql</span> <span class="kn">import</span> <span class="n">JinjaSql</span>
+
+<span class="kn">import</span> <span class="nn">sqlparse</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="QueryBuilder"><a class="viewcode-back" href="../../api.html#py_querybuilder.api.QueryBuilder">[docs]</a><span class="k">class</span> <span class="nc">QueryBuilder</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Relies on Jinja2 templates &amp; JinjaSql to generate SQL statements.</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">      # Assuming the target module has a template with {{ where }}:</span>
+<span class="sd">      with open(&quot;app/articles/templates/query.sql&quot;, &quot;r&quot;) as f:</span>
+<span class="sd">          print(f.read())</span>
+<span class="sd">          # SELECT *</span>
+<span class="sd">          # FROM my_table</span>
+<span class="sd">          # WHERE {{ where }}</span>
+
+<span class="sd">      from py_querybuilder import QueryBuilder</span>
+
+<span class="sd">      qb = QueryBuilder(&quot;app.articles&quot;, [</span>
+<span class="sd">          {</span>
+<span class="sd">              &quot;label&quot;: &quot;Article&quot;,</span>
+<span class="sd">              &quot;options&quot;: [</span>
+<span class="sd">                  {</span>
+<span class="sd">                      &quot;label&quot;: &quot;Title&quot;,</span>
+<span class="sd">                      &quot;value&quot;: &quot;title&quot;,</span>
+<span class="sd">                      &quot;type&quot;: &quot;text&quot;,</span>
+<span class="sd">                  },</span>
+<span class="sd">                  {</span>
+<span class="sd">                      &quot;label&quot;: &quot;URL&quot;,</span>
+<span class="sd">                      &quot;value&quot;: &quot;url&quot;,</span>
+<span class="sd">                      &quot;type&quot;: &quot;text&quot;,</span>
+<span class="sd">                  },</span>
+<span class="sd">              ],</span>
+<span class="sd">          },</span>
+<span class="sd">      ])</span>
+<span class="sd">      sql_query, sql_params = qb.render(&quot;query.sql&quot;, {</span>
+<span class="sd">          &quot;combinator&quot;: &quot;and&quot;,</span>
+<span class="sd">          &quot;rules&quot;: [</span>
+<span class="sd">              {</span>
+<span class="sd">                  &quot;field&quot;: &quot;title&quot;,</span>
+<span class="sd">                  &quot;operator&quot;: &quot;contains&quot;,</span>
+<span class="sd">                  &quot;value&quot;: &quot;France&quot;,</span>
+<span class="sd">              },</span>
+<span class="sd">          ],</span>
+<span class="sd">      })</span>
+
+<span class="sd">      print(sql_query)</span>
+<span class="sd">      # SELECT *</span>
+<span class="sd">      # FROM my_table</span>
+<span class="sd">      # WHERE title ~* ? AS &quot;Title&quot;</span>
+
+<span class="sd">      print(sql_params)</span>
+<span class="sd">      # [&quot;France&quot;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">loader</span><span class="o">=</span><span class="n">PackageLoader</span><span class="p">(</span><span class="vm">__name__</span><span class="p">),</span> <span class="n">autoescape</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">__jql</span> <span class="o">=</span> <span class="n">JinjaSql</span><span class="p">(</span><span class="n">__env</span><span class="p">,</span> <span class="n">param_style</span><span class="o">=</span><span class="s2">&quot;qmark&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">package_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filters</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">operators</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Initializes the `QueryBuilder` instance with package name and filters.</span>
+
+<span class="sd">        :param package_name: Target module containing a `templates` folder.</span>
+<span class="sd">        :param filters: The filters object is a list of grouped dictionaries</span>
+<span class="sd">            with label `str` and options `list` properties. Each option is a</span>
+<span class="sd">            dictionary with label `str`, value `str`, and type `str`. The</span>
+<span class="sd">            label can be anything, but the value must be an unique key, used</span>
+<span class="sd">            by each field in a ruleset. In case an option&#39;s type is &quot;select&quot;</span>
+<span class="sd">            or &quot;multiselect&quot;, it will require a nested options `list` property</span>
+<span class="sd">            with label &amp; value items.</span>
+<span class="sd">        :param operators: The operators object is a dictionary for translating</span>
+<span class="sd">            known operators to their SQL equivalents.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tpl_env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">loader</span><span class="o">=</span><span class="n">PackageLoader</span><span class="p">(</span><span class="n">package_name</span><span class="p">))</span>  <span class="c1"># noqa S701</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">f</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]:</span> <span class="p">{</span>
+                    <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">],</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">sum</span><span class="p">([</span><span class="n">i</span><span class="p">[</span><span class="s2">&quot;options&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">filters</span> <span class="ow">or</span> <span class="p">[]],</span> <span class="p">[])</span>
+            <span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_operators</span> <span class="o">=</span> <span class="n">operators</span> <span class="ow">or</span> <span class="p">{</span>
+            <span class="s2">&quot;after&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;after_equal&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;before&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;before_equal&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;contains&quot;</span><span class="p">:</span> <span class="s2">&quot;~*&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;greater&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;greater_equal&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;equal&quot;</span><span class="p">:</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;in&quot;</span><span class="p">:</span> <span class="s2">&quot;in&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;less&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;less_equal&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;not_contains&quot;</span><span class="p">:</span> <span class="s2">&quot;!~*&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;not_equal&quot;</span><span class="p">:</span> <span class="s2">&quot;!=&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;not_in&quot;</span><span class="p">:</span> <span class="s2">&quot;not in&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;not_null&quot;</span><span class="p">:</span> <span class="s2">&quot;is not null&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;null&quot;</span><span class="p">:</span> <span class="s2">&quot;is null&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">pre_process_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Hook for pre-processing the query before rendering.</span>
+
+<span class="sd">        :param query: The query to be rendered.</span>
+<span class="sd">        :returns: A new query object, with uknown fields pruned out.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">query_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">prune_unknown_fields</span><span class="p">(</span><span class="n">rules</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;rules&quot;</span> <span class="ow">in</span> <span class="n">r</span><span class="p">:</span>
+                    <span class="n">r</span><span class="p">[</span><span class="s2">&quot;rules&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prune_unknown_fields</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;rules&quot;</span><span class="p">])</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;field&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields</span><span class="p">:</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="n">query_copy</span><span class="p">[</span><span class="s2">&quot;rules&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prune_unknown_fields</span><span class="p">(</span><span class="n">query_copy</span><span class="p">[</span><span class="s2">&quot;rules&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">query_copy</span>
+
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">template_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Renders a SQL statement provided a query object.</span>
+
+<span class="sd">        :param template_name: The template file under the `templates` folder.</span>
+<span class="sd">        :param query: The query object is a recursive data structure composed of</span>
+<span class="sd">            combinator &#39;str&#39; and rules `list` properties. Each rule is an object</span>
+<span class="sd">            with field &#39;str&#39;, operator &#39;str&#39;, and value (anything, depending on</span>
+<span class="sd">            the field&#39;s type). In case the rule contains a combinator property,</span>
+<span class="sd">            it&#39;s considered a nested group.</span>
+
+<span class="sd">        :returns: The rendered query and its parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">clean_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_process_query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="n">group_tpl</span> <span class="o">=</span> <span class="n">QueryBuilder</span><span class="o">.</span><span class="n">__env</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="s2">&quot;group.sql&quot;</span><span class="p">)</span>
+        <span class="n">where_tpl</span><span class="p">,</span> <span class="n">where_params</span> <span class="o">=</span> <span class="n">QueryBuilder</span><span class="o">.</span><span class="n">__jql</span><span class="o">.</span><span class="n">prepare_query</span><span class="p">(</span>
+            <span class="n">group_tpl</span><span class="p">,</span>
+            <span class="n">clean_query</span> <span class="o">|</span> <span class="p">{</span><span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fields</span><span class="p">,</span> <span class="s2">&quot;operators&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operators</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">tpl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tpl_env</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="n">template_name</span><span class="p">)</span>
+        <span class="n">sql_query</span> <span class="o">=</span> <span class="n">tpl</span><span class="o">.</span><span class="n">render</span><span class="p">({</span><span class="s2">&quot;where&quot;</span><span class="p">:</span> <span class="n">where_tpl</span><span class="p">})</span>
+        <span class="n">sql_query</span> <span class="o">=</span> <span class="n">QueryBuilder</span><span class="o">.</span><span class="n">format_sql</span><span class="p">(</span><span class="n">sql_query</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">logger</span><span class="o">.</span><span class="n">isEnabledFor</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">sql_query</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sql_query</span><span class="p">,</span> <span class="n">where_params</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">format_sql</span><span class="p">(</span><span class="n">sql_query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Formats a SQL query by uppercasing keywords and reindenting it.</span>
+
+<span class="sd">        :param sql_query: The query to be formatted.</span>
+<span class="sd">        :returns: The formatted query.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">sqlparse</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sql_query</span><span class="p">,</span> <span class="n">keyword_case</span><span class="o">=</span><span class="s2">&quot;upper&quot;</span><span class="p">,</span> <span class="n">reindent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">py-querybuilder  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">py_querybuilder.api</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright Copyright Tiago Fernandez.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+    </div>
+  </body>
+</html>

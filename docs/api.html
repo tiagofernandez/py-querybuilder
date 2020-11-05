@@ -1,0 +1,218 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Developer Interface &#8212; py-querybuilder  documentation</title>
+    <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Py-QueryBuilder" href="index.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Py-QueryBuilder"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">py-querybuilder  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Developer Interface</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-py_querybuilder">
+<span id="developer-interface"></span><span id="api"></span><h1>Developer Interface<a class="headerlink" href="#module-py_querybuilder" title="Permalink to this headline">¶</a></h1>
+<p>This covers all interfaces of the Py-QueryBuilder library.</p>
+<div class="section" id="class">
+<h2>Class<a class="headerlink" href="#class" title="Permalink to this headline">¶</a></h2>
+<p>All functionality is available with the <code class="xref py py-class docutils literal notranslate"><span class="pre">QueryBuilder</span></code> class.</p>
+<dl class="py class">
+<dt id="py_querybuilder.api.QueryBuilder">
+<em class="property">class </em><code class="sig-prename descclassname">py_querybuilder.api.</code><code class="sig-name descname">QueryBuilder</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">package_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">filters</span><span class="p">:</span> <span class="n">list</span></em>, <em class="sig-param"><span class="n">operators</span><span class="p">:</span> <span class="n">dict</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/py_querybuilder/api.html#QueryBuilder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py_querybuilder.api.QueryBuilder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Relies on Jinja2 templates &amp; JinjaSql to generate SQL statements.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Assuming the target module has a template with {{ where }}:</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;app/articles/templates/query.sql&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="c1"># SELECT *</span>
+    <span class="c1"># FROM my_table</span>
+    <span class="c1"># WHERE {{ where }}</span>
+
+<span class="kn">from</span> <span class="nn">py_querybuilder</span> <span class="kn">import</span> <span class="n">QueryBuilder</span>
+
+<span class="n">qb</span> <span class="o">=</span> <span class="n">QueryBuilder</span><span class="p">(</span><span class="s2">&quot;app.articles&quot;</span><span class="p">,</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Article&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;Title&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;URL&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;url&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+<span class="p">])</span>
+<span class="n">sql_query</span><span class="p">,</span> <span class="n">sql_params</span> <span class="o">=</span> <span class="n">qb</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="s2">&quot;query.sql&quot;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s2">&quot;combinator&quot;</span><span class="p">:</span> <span class="s2">&quot;and&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rules&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;operator&quot;</span><span class="p">:</span> <span class="s2">&quot;contains&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;France&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">],</span>
+<span class="p">})</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">sql_query</span><span class="p">)</span>
+<span class="c1"># SELECT *</span>
+<span class="c1"># FROM my_table</span>
+<span class="c1"># WHERE title ~* ? AS &quot;Title&quot;</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">sql_params</span><span class="p">)</span>
+<span class="c1"># [&quot;France&quot;]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="methods">
+<h2>Methods<a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="py_querybuilder.api.QueryBuilder.__init__">
+<code class="sig-prename descclassname">py_querybuilder.api.QueryBuilder.</code><code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">package_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">filters</span><span class="p">:</span> <span class="n">list</span></em>, <em class="sig-param"><span class="n">operators</span><span class="p">:</span> <span class="n">dict</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; None<a class="headerlink" href="#py_querybuilder.api.QueryBuilder.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes the <cite>QueryBuilder</cite> instance with package name and filters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>package_name</strong> – Target module containing a <cite>templates</cite> folder.</p></li>
+<li><p><strong>filters</strong> – The filters object is a list of grouped dictionaries
+with label <cite>str</cite> and options <cite>list</cite> properties. Each option is a
+dictionary with label <cite>str</cite>, value <cite>str</cite>, and type <cite>str</cite>. The
+label can be anything, but the value must be an unique key, used
+by each field in a ruleset. In case an option’s type is “select”
+or “multiselect”, it will require a nested options <cite>list</cite> property
+with label &amp; value items.</p></li>
+<li><p><strong>operators</strong> – The operators object is a dictionary for translating
+known operators to their SQL equivalents.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py_querybuilder.api.QueryBuilder.render">
+<code class="sig-prename descclassname">py_querybuilder.api.QueryBuilder.</code><code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">template_name</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">query</span><span class="p">:</span> <span class="n">dict</span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>str<span class="p">, </span>List<span class="p">]</span><a class="headerlink" href="#py_querybuilder.api.QueryBuilder.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renders a SQL statement provided a query object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>template_name</strong> – The template file under the <cite>templates</cite> folder.</p></li>
+<li><p><strong>query</strong> – The query object is a recursive data structure composed of
+combinator ‘str’ and rules <cite>list</cite> properties. Each rule is an object
+with field ‘str’, operator ‘str’, and value (anything, depending on
+the field’s type). In case the rule contains a combinator property,
+it’s considered a nested group.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The rendered query and its parameters.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Developer Interface</a><ul>
+<li><a class="reference internal" href="#class">Class</a></li>
+<li><a class="reference internal" href="#methods">Methods</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Py-QueryBuilder</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Py-QueryBuilder"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">py-querybuilder  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Developer Interface</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright Copyright Tiago Fernandez.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+    </div>
+  </body>
+</html>
