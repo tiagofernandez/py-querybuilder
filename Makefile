@@ -69,5 +69,8 @@ docs: venv
 build: clean test lint
 	python setup.py bdist_wheel
 
+build-zip: build
+	python setup.py sdist --formats=gztar,zip
+
 publish: build
 	twine upload dist/*
